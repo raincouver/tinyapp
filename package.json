@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/raincouver/tinyapp/issues"
   },
-  "homepage": "https://github.com/raincouver/tinyapp#readme"
+  "homepage": "https://github.com/raincouver/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
