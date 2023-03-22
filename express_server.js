@@ -15,6 +15,8 @@ const urlDatabase = {
   '9sm5xK': "http://www.google.com"
 };
 
+const userDatabase = {};
+
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
@@ -44,6 +46,11 @@ app.get("/urls/:id", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   urlDatabase[id] = req.body.longURL;
+  res.redirect('/urls');
+});
+
+app.post("/login", (req, res) => {
+  userDatabase[req.body.username] = res.cookie;
   res.redirect('/urls');
 });
 
