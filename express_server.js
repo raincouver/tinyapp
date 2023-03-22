@@ -15,8 +15,6 @@ const urlDatabase = {
   '9sm5xK': "http://www.google.com"
 };
 
-const userDatabase = {};
-
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
@@ -50,7 +48,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  userDatabase[req.body.username] = res.cookie;
+  res.cookie('username', req.body.username, )
   res.redirect('/urls');
 });
 
