@@ -41,11 +41,19 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  urlDatabase[id] = req.body.longURL;
+  res.redirect('/urls');
+});
+
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   delete urlDatabase[id];
   res.redirect('/urls');
 });
+
+
 // app.get('/hello', (req, res) =>{
 //   res.send('<html><body>Hello <b>World</b></body></html>\n');
 // });
@@ -62,10 +70,10 @@ app.get("/hello", (req, res) => {
   res.render("hello_world", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
-});
+// app.post("/urls", (req, res) => {
+//   console.log(req.body); // Log the POST request body to the console
+//   res.send("Ok"); // Respond with 'Ok' (we will replace this)
+// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
