@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = 8080; //default port 8080
 const cookieParser = require('cookie-parser')
+const morgan = require('morgan');
 
 function generateRandomString() {
   
@@ -15,8 +16,9 @@ const urlDatabase = {
   '9sm5xK': "http://www.google.com"
 };
 
-app.use(cookieParser())
-app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()) // Parse Cookie
+app.use(express.urlencoded({ extended: true })); //Parse Body
+app.use(morgan('dev'))
 
 app.get("/", (req, res) => {
   // res.send('Hello!');
