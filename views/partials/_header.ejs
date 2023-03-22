@@ -18,12 +18,19 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <h3 style="align-items: center; margin-right: 0.5em"> Hi, <%- username%></h3>
+
+    <% if (username === 'undefined') { %>
     <form class="form-inline" action="/login" method="POST">
         <input class="form-control" type="text" name="username" placeholder="Username"
           style="width: 200px; height: 48px" />
         <button type="submit" class="btn-outline-dark btn-lg" style="margin-left: 0.5em; background-color: transparent;" >Login</button>
     </form>
+    <% } else {%>    
+    <h3 style="align-items: center; margin-right: 0.5em"> Hi, <%- username%></h3>
+    <form class="form-inline" action="/logout" method="POST">
+      <button type="submit" class="btn-outline-dark btn-lg" style="margin-left: 0.5em; background-color: transparent;" >Logout</button>
+  </form>
+    <% } %> 
   </nav>
 
 </header>

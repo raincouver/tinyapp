@@ -29,6 +29,7 @@ app.get('/urls.json', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
+  console.log(req.cookies);
   const templateVars = { 
     urls: urlDatabase,
     username: req.cookies["username"]
@@ -45,7 +46,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  // console.log(req.cookies);
+  console.log(req.cookies);
   const templateVars = { 
     id: req.params.id, 
     longURL:urlDatabase[req.params.id],
@@ -57,6 +58,11 @@ app.get("/urls/:id", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   urlDatabase[id] = req.body.longURL;
+  res.redirect('/urls');
+});
+
+app.post("/logout", (req, res) => {
+  res.cookie('username', "undefined", )
   res.redirect('/urls');
 });
 
