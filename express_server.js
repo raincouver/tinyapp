@@ -8,9 +8,6 @@ function generateRandomString() {
 }
 
 
-
-
-
 app.set("view engine", "ejs");
 
 const urlDatabase = {
@@ -23,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
   res.send('Hello!');
 });
+
 
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
@@ -38,7 +36,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL:urls[req.params.id] };
+  console.log(req);
+  const templateVars = { id: req.params.id, longURL:urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
@@ -46,6 +45,13 @@ app.get("/urls/:id", (req, res) => {
 // app.get('/hello', (req, res) =>{
 //   res.send('<html><body>Hello <b>World</b></body></html>\n');
 // });
+
+app.get("/u/:id", (req, res) => {
+  // console.log(req);
+  res.redirect(urlDatabase[req.params.id]);
+});
+
+
 
 app.get("/hello", (req, res) => {
   const templateVars = { greeting: "Hello World!" };
