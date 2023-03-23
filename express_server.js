@@ -33,9 +33,21 @@ function getUserById(Id) {
   }
 };
 
+function filterUrlsToShow(Id) {
+  const result = {};
+
+  for (urlId in urlDatabase){
+    let value = urlDatabase[urlId];
+    if (value.id === Id){
+      result[`${urlId}`] = value.longURL;
+    }
+  }
+  return result;
+}
+
 const users = {
-  '00001': {
-    id:'00001',
+  'example': {
+    id:'example',
     email:'a@a.com',
     password:'123'
   },  
@@ -44,15 +56,31 @@ const users = {
     email:'b@b.com',
     password:'123'
   },
+  'aJ48lW':{
+    id:'aJ48lW',
+    email:'c@c.com',
+    password:'123'
+  }
+
+};
+
+const urlDatabase = {
+  'b2xVn2': {
+    longURL : "http://www.lighthouselabs.ca",
+    id : 'example'
+  },
+  '9sm5xK':{
+    longURL : "http://www.google.com",
+    id : 'example'
+  },
+  'b6UTxQ': {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+
 };
 
 app.set("view engine", "ejs");
-
-const urlDatabase = {
-  'b2xVn2': "http://www.lighthouselabs.ca",
-  '9sm5xK': "http://www.google.com"
-};
-
 app.use(cookieParser()) // Parse Cookie populate req.cookies
 app.use(express.urlencoded({ extended: true })); //Parse Body populate req.body
 app.use(morgan('dev'))
@@ -69,14 +97,21 @@ app.get('/urls.json', (req, res) => {
 
 app.get('/urls', (req, res) => {
 
-  console.log(req.cookies);
-
   let user_id = req.cookies["user_id"];
 
+  // console.log(user_id);
+
+  // if (!user_id){
+  //   user_id = 'example';
+  // }
+  
+  //if not one is logged in, the /urls page will display example urls
   const templateVars = { 
-    urls: urlDatabase,
+    urls: filterUrlsToShow(user_id?user_id:'example'),
     user: users[user_id]
   };
+
+  console.log(templateVars);
 
   res.render('urls_index', templateVars);
 });
