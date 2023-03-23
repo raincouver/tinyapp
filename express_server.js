@@ -24,6 +24,15 @@ function getUserByEmail(email) {
   }
 };
 
+function getUserById(Id) {
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.user_id === Id) {
+      return true;
+    }
+  }
+};
+
 const users = {
   '00001': {
     id:'00001',
@@ -90,6 +99,10 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+
+  if(!getUserById(req.params.id)) {
+    return res.status(400).send("Page doesn't exist! Please verify the short URL entered and try agin.");
+  }
 
   let user_id = req.cookies["user_id"];
 
