@@ -4,6 +4,9 @@ const PORT = 8080; //default port 8080
 const cookieParser = require('cookie-parser')
 const morgan = require('morgan');
 
+////////////////////////////////////////////////////////
+//Function /////////////////////////////////////////////
+////////////////////////////////////////////////////////
 function generateRandomString(length) {
   const charRange ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -32,18 +35,29 @@ function getPageByShortUrl(shortUrl) {
   }
 };
 
-function filterUrlsToShow(Id) {
+function ifShortUrlAccessible(shortUrl) {
+  for (const userId in users) {
+    if (userId === urlDatabase[shortUrl].id) {
+      return true;
+    }
+  }
+};
+
+function urlsForUser(id) {
   const result = {};
 
   for (urlId in urlDatabase){
     let value = urlDatabase[urlId];
-    if (value.id === Id){
+    if (value.id === id){
       result[`${urlId}`] = value.longURL;
     }
   }
   return result;
 }
 
+////////////////////////////////////////////////////////
+//Database /////////////////////////////////////////////
+////////////////////////////////////////////////////////
 const users = {
   'example': {
     id:'example',
@@ -79,10 +93,18 @@ const urlDatabase = {
 
 };
 
+////////////////////////////////////////////////////////
+//Apps Use /////////////////////////////////////////////
+////////////////////////////////////////////////////////
 app.set("view engine", "ejs");
 app.use(cookieParser()) // Parse Cookie populate req.cookies
 app.use(express.urlencoded({ extended: true })); //Parse Body populate req.body
 app.use(morgan('dev'))
+
+
+////////////////////////////////////////////////////////
+//Routes: GET //////////////////////////////////////////
+////////////////////////////////////////////////////////
 
 //landing page redirect to /urls
 app.get("/", (req, res) => {
@@ -98,9 +120,13 @@ app.get('/urls', (req, res) => {
 
   let user_id = req.cookies["user_id"];
 
-  //if not one is logged in, the /urls page will display example urls
+  //If the user is not logged in, display a message or prompt suggesting that they log in or register first.
+  if (!users[user_id]) {
+    return res.status(400).send("You must have an account to use our amazing feature! Sign up now if you don't have an account with use yet. Log in if you do!");
+  }
+
   const templateVars = { 
-    urls: filterUrlsToShow(user_id ? user_id : 'example'),
+    urls: urlsForUser(user_id),
     user: users[user_id]
   };
 
@@ -127,8 +153,12 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
 
+  if(!ifShortUrlAccessible(req.params.id)) {
+    return res.status(401).send("Unauthorized.");
+  }
+
   if(!getPageByShortUrl(req.params.id)) {
-    return res.status(400).send("Page doesn't exist! Please verify the short URL entered and try agin.");
+    return res.status(404).send("Not Found.");
   }
 
   let user_id = req.cookies["user_id"];
@@ -144,13 +174,48 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// GET /Register
+app.get('/register', (req, res) => {
+  
+  let user_id = req.cookies["user_id"];
+  
+  //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
+  if (users[user_id]) {
+    return res.redirect('/urls');
+  }
+
+  res.render('registration');
+})
+
+// GET /LOGIN
+app.get('/login', (req, res) => {
+
+  let user_id = req.cookies["user_id"];
+  
+  //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
+  if (users[user_id]) {
+    return res.redirect('/urls');
+  }
+
+  res.render('login');
+})
+
+app.get("/u/:id", (req, res) => {
+  // console.log(req);
+  res.redirect(urlDatabase[req.params.id].longURL);
+});
+
+////////////////////////////////////////////////////////
+//Routes: POST /////////////////////////////////////////
+////////////////////////////////////////////////////////
+
 app.post("/urls", (req, res) => {
 
   let user_id = req.cookies["user_id"];
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (!users[user_id]) {
-    return res.status(400).send('Please log in to continue!');
+    return res.status(400).send('Log in is required to use this feature!');
   }
 
   let shortURL = generateRandomString(6);
@@ -164,36 +229,25 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  urlDatabase[id].longURL = req.body.longURL;
-  res.redirect('/urls');
-});
 
-
-
-// app.post("/logout", (req, res) => {
-//   res.cookie('user_id', "undefined", )
-//   res.redirect('/urls');
-// });
-
-// app.post("/login", (req, res) => {
-//   res.cookie('user_id', req.body.user_id, )
-//   res.redirect('/urls');
-// });
-
-
-// GET /Register
-app.get('/register', (req, res) => {
-  
   let user_id = req.cookies["user_id"];
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
-  if (users[user_id]) {
-    return res.redirect('/urls');
+  if (!users[user_id]) {
+    return res.status(400).send('Log in is required to use this feature!');
   }
 
-  res.render('registration');
-})
+  if(!ifShortUrlAccessible(req.params.id)) {
+    return res.status(401).send("Unauthorized.");
+  }
+
+  if(!getPageByShortUrl(req.params.id)) {
+    return res.status(404).send("Not Found.");
+  }
+
+  urlDatabase[req.params.id].longURL = req.body.longURL;
+  res.redirect('/urls');
+});
 
 // POST /Register
 app.post('/register', (req, res) => {
@@ -236,19 +290,6 @@ app.post('/register', (req, res) => {
   //Set a cookie and then redirect the user
   res.cookie('user_id', newUserId);
   res.redirect('/urls');
-})
-
-// GET /LOGIN
-app.get('/login', (req, res) => {
-
-  let user_id = req.cookies["user_id"];
-  
-  //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
-  if (users[user_id]) {
-    return res.redirect('/urls');
-  }
-
-  res.render('login');
 })
 
 // POST /LOGIN
@@ -315,42 +356,33 @@ app.post('/logout', (req, res) => {
   //redirect the user
   res.redirect('/login');
 })
-// //POST /logout
-// app.get('/logout', (req, res) => {
-//   //Clear the cookie
-//   res.clearCookie('user_id');
 
-//   //redirect the user
-//   res.redirect('/login');
-// })
 
 app.post("/urls/:id/delete", (req, res) => {
+
+  let user_id = req.cookies["user_id"];
+  
+  //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
+  if (!users[user_id]) {
+    return res.status(400).send('Log in is required to use this feature!');
+  }
+
+  if(!ifShortUrlAccessible(req.params.id)) {
+    return res.status(401).send("Unauthorized.");
+  }
+
+  if(!getPageByShortUrl(req.params.id)) {
+    return res.status(404).send("Not Found.");
+  }
+
   const id = req.params.id;
   delete urlDatabase[id];
   res.redirect('/urls');
 });
 
-
-// app.get('/hello', (req, res) =>{
-//   res.send('<html><body>Hello <b>World</b></body></html>\n');
-// });
-
-app.get("/u/:id", (req, res) => {
-  // console.log(req);
-  res.redirect(urlDatabase[req.params.id].longURL);
-});
-
-
-
-// app.get("/hello", (req, res) => {
-//   const templateVars = { greeting: "Hello World!" };
-//   res.render("hello_world", templateVars);
-// });
-
-// app.post("/urls", (req, res) => {
-//   console.log(req.body); // Log the POST request body to the console
-//   res.send("Ok"); // Respond with 'Ok' (we will replace this)
-// });
+////////////////////////////////////////////////////////
+//Routes: LISTEN ///////////////////////////////////////
+////////////////////////////////////////////////////////
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
