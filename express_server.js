@@ -1,60 +1,10 @@
 const express = require('express');
 const app = express();
 const PORT = 8080; //default port 8080
-// const cookieParser = require('cookie-parser')
 const morgan = require('morgan');
 const bcrypt = require("bcryptjs");
-const cookieSession = require('cookie-session')
-////////////////////////////////////////////////////////
-//Function /////////////////////////////////////////////
-////////////////////////////////////////////////////////
-function generateRandomString(length) {
-  const charRange ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  let num = 0;
-  while (num < length) {
-    result += charRange .charAt(Math.floor(Math.random() * charRange.length));
-    num += 1;
-  }
-  return result;
-};
-
-function getUserByEmail(email) {
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      return true;
-    }
-  }
-};
-
-function getPageByShortUrl(shortUrl) {
-  for (const url in urlDatabase) {
-    if (url === shortUrl) {
-      return true;
-    }
-  }
-};
-
-function ifShortUrlAccessible(shortUrl) {
-  for (const userId in users) {
-    if (userId === urlDatabase[shortUrl].id) {
-      return true;
-    }
-  }
-};
-
-function urlsForUser(id) {
-  const result = {};
-
-  for (urlId in urlDatabase){
-    let value = urlDatabase[urlId];
-    if (value.id === id){
-      result[`${urlId}`] = value.longURL;
-    }
-  }
-  return result;
-}
+const cookieSession = require('cookie-session');
+const helper = require('./helper.js');
 
 ////////////////////////////////////////////////////////
 //Database /////////////////////////////////////////////
@@ -63,17 +13,18 @@ const users = {
   'example': {
     id:'example',
     email:'a@a.com',
-    password:bcrypt.hashSync('123', 10)
-  },  
+    password:'$2a$10$ehrVXtecxFvxutH6BxjwremOoQhCB1Yxun/p3QL7eVZXZxS1T0Xka'
+    //bcrypt.hashSync('123', 10)
+  },
   '00002': {
     id:'00002',
     email:'b@b.com',
-    password:bcrypt.hashSync('123', 10)
+    password:'$2a$10$CXYzHBtiUxQzgsYqKc4Xpecr7uhFkRwvSKmqnVM3ItP35VBgo.6am'
   },
   'aJ48lW':{
     id:'aJ48lW',
     email:'c@c.com',
-    password:bcrypt.hashSync('123', 10)
+    password:'$2a$10$Uj.gSkTx5U8NPlxMC/k/u.GO0EDHQjovo9r038Kz0yUdyQjJIJTpK'
   }
 
 };
@@ -100,14 +51,14 @@ const urlDatabase = {
 app.set("view engine", "ejs");
 // app.use(cookieParser()) // Parse Cookie populate req.cookies
 app.use(express.urlencoded({ extended: true })); //Parse Body populate req.body
-app.use(morgan('dev'))
+app.use(morgan('dev'));
 app.use(cookieSession({
   name: 'session',
   keys: ['/* secret keys */'],
 
   // Cookie Options
   maxAge: 10 * 60 * 1000 // 10 min
-}))
+}));
 
 ////////////////////////////////////////////////////////
 //Routes: GET //////////////////////////////////////////
@@ -116,7 +67,7 @@ app.use(cookieSession({
 //landing page redirect to /urls
 app.get("/", (req, res) => {
   // res.send('Hello!');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 app.get('/urls.json', (req, res) => {
@@ -125,35 +76,35 @@ app.get('/urls.json', (req, res) => {
 
 app.get('/urls', (req, res) => {
 
-  // let user_id = req.cookies["user_id"];
-  let user_id = req.session.user_id;
+  // let userSessionID = req.cookies["userSessionID"];
+  let userSessionID = req.session.userSessionID;
   //If the user is not logged in, display a message or prompt suggesting that they log in or register first.
-  if (!users[user_id]) {
+  if (!users[userSessionID]) {
     return res.status(400).send("You must have an account to use our amazing feature! Sign up now if you don't have an account with use yet. Log in if you do!");
   }
 
-  const templateVars = { 
-    urls: urlsForUser(user_id),
-    user: users[user_id]
+  const templateVars = {
+    urls: helper.urlsForUser(userSessionID, urlDatabase),
+    user: users[userSessionID]
   };
 
-  // console.log(filterUrlsToShow(user_id));
+  // console.log(filterUrlsToShow(userSessionID));
 
   res.render('urls_index', templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
 
-  // let user_id = req.cookies["user_id"];
-  let user_id = req.session.user_id;
+  // let userSessionID = req.cookies["userSessionID"];
+  let userSessionID = req.session.userSessionID;
 
   //If the user is not logged in, redirect GET /urls/new to GET /login
-  if (!users[user_id]) {
+  if (!users[userSessionID]) {
     return res.redirect('/login');
   }
 
-  const templateVars = { 
-    user: users[user_id]
+  const templateVars = {
+    user: users[userSessionID]
   };
 
   res.render("urls_new", templateVars);
@@ -161,22 +112,22 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
 
-  if(!ifShortUrlAccessible(req.params.id)) {
+  if (!helper.ifShortUrlAccessible(req.params.id, urlDatabase, users)) {
     return res.status(401).send("Unauthorized.");
   }
 
-  if(!getPageByShortUrl(req.params.id)) {
+  if (!helper.getPageByShortUrl(req.params.id, urlDatabase)) {
     return res.status(404).send("Not Found.");
   }
 
-  // let user_id = req.cookies["user_id"];
-  let user_id = req.session.user_id;
+  // let userSessionID = req.cookies["userSessionID"];
+  let userSessionID = req.session.userSessionID;
 
-  const templateVars = { 
-    id: req.params.id, 
+  const templateVars = {
+    id: req.params.id,
     longURL:urlDatabase[req.params.id].longURL,
-    user: users[user_id]
-   };
+    user: users[userSessionID]
+  };
 
   console.log(templateVars);
 
@@ -186,30 +137,30 @@ app.get("/urls/:id", (req, res) => {
 // GET /Register
 app.get('/register', (req, res) => {
   
-  // let user_id = req.cookies["user_id"];
-  let user_id = req.session.user_id;
+  // let userSessionID = req.cookies["userSessionID"];
+  let userSessionID = req.session.userSessionID;
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
-  if (users[user_id]) {
+  if (users[userSessionID]) {
     return res.redirect('/urls');
   }
 
   res.render('registration');
-})
+});
 
 // GET /LOGIN
 app.get('/login', (req, res) => {
 
-  // let user_id = req.cookies["user_id"];
-  let user_id = req.session.user_id;
+  // let userSessionID = req.cookies["userSessionID"];
+  let userSessionID = req.session.userSessionID;
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
-  if (users[user_id]) {
+  if (users[userSessionID]) {
     return res.redirect('/urls');
   }
 
   res.render('login');
-})
+});
 
 app.get("/u/:id", (req, res) => {
   // console.log(req);
@@ -222,18 +173,18 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls", (req, res) => {
 
-  let user_id = req.session.user_id;
+  let userSessionID = req.session.userSessionID;
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
-  if (!users[user_id]) {
+  if (!users[userSessionID]) {
     return res.status(400).send('Log in is required to use this feature!');
   }
 
-  let shortURL = generateRandomString(6);
+  let shortURL = helper.generateRandomString(6);
 
   urlDatabase[shortURL] = {
     'longURL' : req.body.longURL,
-    'id' : user_id
+    'id' : userSessionID
   };
 
   res.redirect(`/urls/${shortURL}`);
@@ -241,19 +192,19 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
 
-  // let user_id = req.cookies["user_id"];
-  let user_id = req.session.user_id;
+  // let userSessionID = req.cookies["userSessionID"];
+  let userSessionID = req.session.userSessionID;
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
-  if (!users[user_id]) {
+  if (!users[userSessionID]) {
     return res.status(400).send('Log in is required to use this feature!');
   }
 
-  if(!ifShortUrlAccessible(req.params.id)) {
+  if (!helper.ifShortUrlAccessible(req.params.id, urlDatabase, users)) {
     return res.status(401).send("Unauthorized.");
   }
 
-  if(!getPageByShortUrl(req.params.id)) {
+  if (!helper.getPageByShortUrl(req.params.id, urlDatabase)) {
     return res.status(404).send("Not Found.");
   }
 
@@ -263,7 +214,7 @@ app.post("/urls/:id", (req, res) => {
 
 // POST /Register
 app.post('/register', (req, res) => {
-  console.log(req.body)
+  console.log(req.body);
   const email = req.body.email;
   const hashedPassword = bcrypt.hashSync(req.body.password, 10);
 
@@ -276,13 +227,13 @@ app.post('/register', (req, res) => {
   }
 
   //Check if email is already registered
-  if (getUserByEmail(email)) {
+  if (helper.getUserByEmail(email, users)) {
     return res.status(400).send('Looks like you have already registered with us, log in with your password!');
   }
   
   //Assign new user with new id
-  // let newUserId = String(Object.keys(users).length + 1).padStart(5, '0'); 
-  let newUserId = generateRandomString(6);
+  // let newUserId = String(Object.keys(users).length + 1).padStart(5, '0');
+  let newUserId = helper.generateRandomString(6);
 
   //Check if the newly generated ID is already existed
   for (const userId in users) {
@@ -300,14 +251,14 @@ app.post('/register', (req, res) => {
   
   //The enetered credentials are correct
   //Set a cookie and then redirect the user
-  req.session.user_id = newUserId;
-  // res.cookie('user_id', newUserId);
+  req.session.userSessionID = newUserId;
+  // res.cookie('userSessionID', newUserId);
   res.redirect('/urls');
-})
+});
 
 // POST /LOGIN
 app.post('/login', (req, res) => {
-  console.log(req.body)
+  console.log(req.body);
   const email = req.body.email;
   const password = req.body.password;
 
@@ -325,7 +276,7 @@ app.post('/login', (req, res) => {
     }
   }
 
-  console.log(foundUser)
+  console.log(foundUser);
   // did we Not find a user
   if (!foundUser) {
     return res.status(400).send('No user with that email found!');
@@ -339,14 +290,14 @@ app.post('/login', (req, res) => {
   //The enetered credentials are correct
   //Set a cookie and then redirect the user
   
-  req.session.user_id = foundUser.id;
-  // res.cookie('user_id', foundUser.id);
+  req.session.userSessionID = foundUser.id;
+  // res.cookie('userSessionID', foundUser.id);
   res.redirect('/');
-})
+});
 
 // //GET /PROTECTED
 // app.get('/protected', (req, res) => {
-//   //check if the user is logged in 
+//   //check if the user is logged in
 //   const userId = req.cookies.userId;
 //   const user = users[userId];
 
@@ -366,29 +317,29 @@ app.post('/login', (req, res) => {
 //POST /logout
 app.post('/logout', (req, res) => {
   //Clear the cookie
-  // res.clearCookie('user_id');
-  req.session.user_id = "";
+  // res.clearCookie('userSessionID');
+  req.session = null;
 
   //redirect the user
   res.redirect('/login');
-})
+});
 
 
 app.post("/urls/:id/delete", (req, res) => {
 
-  let user_id = req.session.user_id;
-  // let user_id = req.cookies["user_id"];
+  let userSessionID = req.session.userSessionID;
+  // let userSessionID = req.cookies["userSessionID"];
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
-  if (!users[user_id]) {
+  if (!users[userSessionID]) {
     return res.status(400).send('Log in is required to use this feature!');
   }
 
-  if(!ifShortUrlAccessible(req.params.id)) {
+  if (!helper.ifShortUrlAccessible(req.params.id, urlDatabase, users)) {
     return res.status(401).send("Unauthorized.");
   }
 
-  if(!getPageByShortUrl(req.params.id)) {
+  if (!helper.getPageByShortUrl(req.params.id, urlDatabase)) {
     return res.status(404).send("Not Found.");
   }
 
