@@ -1,6 +1,6 @@
 <header>
-  <nav class="navbar navbar-expand-md navbar-dark bg-success">
-    <a class="navbar-brand" href="/urls">TinyApp</a>
+  <nav class="navbar navbar-expand-md p-3 navbar-dark bg-success">
+    <a class="navbar-brand " href="/urls">TinyApp</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
       aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -14,37 +14,23 @@
 
     <% if (!user) { %>
 
-      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNavAltMarkup">
         <div class="navbar-nav">
-          <a class="nav-item nav-link" style="float: right" href="/login">Log In</a>
-          <a class="nav-item nav-link" style="float: right" href="/register">Sign Up</a>
+          <a class="nav-link" href="/login">Log in</a>
+          <a class="nav-link" href="/register">Sign Up</a>
         </div>
       </div>
-      <!--
-    <form class="form-inline" action="/login" method="GET">
-        <input class="form-control" type="email" name="email" placeholder="email"
-          style="width: 200px; height: 48px" />
-        <button type="submit" class="btn-outline-dark btn-lg" style="margin-left: 0.5em; background-color: transparent;" >Login</button>
-    </form>
-    <form class="form-inline" action="/register" method="GET">
-      <button type="submit" class="btn-outline-dark btn-lg" style="margin-left: 0.5em; background-color: transparent;" >Sign Up</button>
-  </form> 
--->
+
       <% } else {%>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav">
-            <a class="nav-item nav-link" style="float: right;">Hi, <%= user.email%></a>
+            <a class="nav-item nav-link">Hi, <%= user.email%></a>
             <form class="form-inline" action="/logout" method="POST">
-              <button type="submit" class="btn btn-light">Log out</button>
+              <button type="submit" class="btn btn-outline-dark ">Logout</button>
             </form>
           </div>
         </div>
-        <!--  
-    <h3 style="align-items: center; margin-right: 0.5em"> Hi, <%= user.email%></h3>
-    <form class="form-inline" action="/logout" method="POST">
-      <button type="submit" class="btn-outline-dark btn-lg" style="margin-left: 0.5em; background-color: transparent;" >Logout</button>
-  </form>
--->
+
     <% } %> 
   </nav>
 
