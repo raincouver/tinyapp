@@ -76,6 +76,11 @@ app.get("/urls/new", (req, res) => {
 
   let user_id = req.cookies["user_id"];
 
+  //If the user is not logged in, redirect GET /urls/new to GET /login
+  if (!users[user_id]) {
+    return res.redirect('/login');
+  }
+
   const templateVars = { 
     urls: urlDatabase,
     user: users[user_id]
@@ -99,11 +104,27 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.post("/urls", (req, res) => {
+
+  let user_id = req.cookies["user_id"];
+  
+  //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
+  if (!users[user_id]) {
+    return res.status(400).send('Please log in to continue!');
+  }
+
+  let shortURL = generateRandomString(6);
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   urlDatabase[id] = req.body.longURL;
   res.redirect('/urls');
 });
+
+
 
 // app.post("/logout", (req, res) => {
 //   res.cookie('user_id', "undefined", )
@@ -118,6 +139,14 @@ app.post("/urls/:id", (req, res) => {
 
 // GET /Register
 app.get('/register', (req, res) => {
+  
+  let user_id = req.cookies["user_id"];
+  
+  //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
+  if (users[user_id]) {
+    return res.redirect('/urls');
+  }
+
   res.render('registration');
 })
 
@@ -166,6 +195,14 @@ app.post('/register', (req, res) => {
 
 // GET /LOGIN
 app.get('/login', (req, res) => {
+
+  let user_id = req.cookies["user_id"];
+  
+  //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
+  if (users[user_id]) {
+    return res.redirect('/urls');
+  }
+
   res.render('login');
 })
 
