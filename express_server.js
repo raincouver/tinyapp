@@ -24,10 +24,9 @@ function getUserByEmail(email) {
   }
 };
 
-function getUserById(Id) {
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.user_id === Id) {
+function getPageByShortUrl(shortUrl) {
+  for (const url in urlDatabase) {
+    if (url === shortUrl) {
       return true;
     }
   }
@@ -75,7 +74,7 @@ const urlDatabase = {
   },
   'b6UTxQ': {
     longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
+    id : "aJ48lW"
   },
 
 };
@@ -99,19 +98,13 @@ app.get('/urls', (req, res) => {
 
   let user_id = req.cookies["user_id"];
 
-  // console.log(user_id);
-
-  // if (!user_id){
-  //   user_id = 'example';
-  // }
-  
   //if not one is logged in, the /urls page will display example urls
   const templateVars = { 
-    urls: filterUrlsToShow(user_id?user_id:'example'),
+    urls: filterUrlsToShow(user_id ? user_id : 'example'),
     user: users[user_id]
   };
 
-  console.log(templateVars);
+  // console.log(filterUrlsToShow(user_id));
 
   res.render('urls_index', templateVars);
 });
@@ -126,7 +119,6 @@ app.get("/urls/new", (req, res) => {
   }
 
   const templateVars = { 
-    urls: urlDatabase,
     user: users[user_id]
   };
 
@@ -135,19 +127,19 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
 
-  if(!getUserById(req.params.id)) {
+  if(!getPageByShortUrl(req.params.id)) {
     return res.status(400).send("Page doesn't exist! Please verify the short URL entered and try agin.");
   }
 
   let user_id = req.cookies["user_id"];
 
-  console.log(req.cookies);
-
   const templateVars = { 
     id: req.params.id, 
-    longURL:urlDatabase[req.params.id],
+    longURL:urlDatabase[req.params.id].longURL,
     user: users[user_id]
    };
+
+  console.log(templateVars);
 
   res.render("urls_show", templateVars);
 });
@@ -162,13 +154,18 @@ app.post("/urls", (req, res) => {
   }
 
   let shortURL = generateRandomString(6);
-  urlDatabase[shortURL] = req.body.longURL;
+
+  urlDatabase[shortURL] = {
+    'longURL' : req.body.longURL,
+    'id' : user_id
+  };
+
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
-  urlDatabase[id] = req.body.longURL;
+  urlDatabase[id].longURL = req.body.longURL;
   res.redirect('/urls');
 });
 
@@ -340,7 +337,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   // console.log(req);
-  res.redirect(urlDatabase[req.params.id]);
+  res.redirect(urlDatabase[req.params.id].longURL);
 });
 
 
