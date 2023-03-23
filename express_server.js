@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080; //default port 8080
 const cookieParser = require('cookie-parser')
 const morgan = require('morgan');
-
+const bcrypt = require("bcryptjs");
 ////////////////////////////////////////////////////////
 //Function /////////////////////////////////////////////
 ////////////////////////////////////////////////////////
@@ -62,17 +62,17 @@ const users = {
   'example': {
     id:'example',
     email:'a@a.com',
-    password:'123'
+    password:bcrypt.hashSync('123', 10)
   },  
   '00002': {
     id:'00002',
     email:'b@b.com',
-    password:'123'
+    password:bcrypt.hashSync('123', 10)
   },
   'aJ48lW':{
     id:'aJ48lW',
     email:'c@c.com',
-    password:'123'
+    password:bcrypt.hashSync('123', 10)
   }
 
 };
@@ -253,13 +253,13 @@ app.post("/urls/:id", (req, res) => {
 app.post('/register', (req, res) => {
   console.log(req.body)
   const email = req.body.email;
-  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
 
   //Check if email and password were not provided
   if (!email) {
     return res.status(400).send('Please provide an email address to continue!');
   }
-  if (!password) {
+  if (!hashedPassword) {
     return res.status(400).send('Please provide a password to continue!');
   }
 
@@ -283,7 +283,7 @@ app.post('/register', (req, res) => {
   users[newUserId] = {
     id:newUserId,
     email:email,
-    password:password
+    password:hashedPassword
   };
   
   //The enetered credentials are correct
@@ -319,7 +319,7 @@ app.post('/login', (req, res) => {
   }
 
   // do the passwords NOT match
-  if (foundUser.password !== password) {
+  if (!bcrypt.compareSync(password,foundUser.password)) {
     return res.status(400).send('Passwords do not match!');
   }
 
