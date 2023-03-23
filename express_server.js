@@ -13,7 +13,16 @@ function generateRandomString(length) {
     num += 1;
   }
   return result;
-}
+};
+
+function getUserByEmail(email) {
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      return true;
+    }
+  }
+};
 
 const users = {
   '00001': {
@@ -26,7 +35,7 @@ const users = {
     email:'b@b.com',
     password:'123'
   },
-}
+};
 
 app.set("view engine", "ejs");
 
@@ -127,13 +136,10 @@ app.post('/register', (req, res) => {
   }
 
   //Check if email is already registered
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      return res.status(400).send('Looks like you have already registered with us, log in with your password!');
-    }
+  if (getUserByEmail(email)) {
+    return res.status(400).send('Looks like you have already registered with us, log in with your password!');
   }
-
+  
   //Assign new user with new id
   // let newUserId = String(Object.keys(users).length + 1).padStart(5, '0'); 
   let newUserId = generateRandomString(6);
