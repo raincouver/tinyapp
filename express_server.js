@@ -1,9 +1,10 @@
 const express = require('express');
 const app = express();
 const PORT = 8080; //default port 8080
-const cookieParser = require('cookie-parser')
+// const cookieParser = require('cookie-parser')
 const morgan = require('morgan');
 const bcrypt = require("bcryptjs");
+const cookieSession = require('cookie-session')
 ////////////////////////////////////////////////////////
 //Function /////////////////////////////////////////////
 ////////////////////////////////////////////////////////
@@ -97,10 +98,16 @@ const urlDatabase = {
 //Apps Use /////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 app.set("view engine", "ejs");
-app.use(cookieParser()) // Parse Cookie populate req.cookies
+// app.use(cookieParser()) // Parse Cookie populate req.cookies
 app.use(express.urlencoded({ extended: true })); //Parse Body populate req.body
 app.use(morgan('dev'))
+app.use(cookieSession({
+  name: 'session',
+  keys: ['/* secret keys */'],
 
+  // Cookie Options
+  maxAge: 10 * 60 * 1000 // 10 min
+}))
 
 ////////////////////////////////////////////////////////
 //Routes: GET //////////////////////////////////////////
@@ -118,8 +125,8 @@ app.get('/urls.json', (req, res) => {
 
 app.get('/urls', (req, res) => {
 
-  let user_id = req.cookies["user_id"];
-
+  // let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   //If the user is not logged in, display a message or prompt suggesting that they log in or register first.
   if (!users[user_id]) {
     return res.status(400).send("You must have an account to use our amazing feature! Sign up now if you don't have an account with use yet. Log in if you do!");
@@ -137,7 +144,8 @@ app.get('/urls', (req, res) => {
 
 app.get("/urls/new", (req, res) => {
 
-  let user_id = req.cookies["user_id"];
+  // let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
 
   //If the user is not logged in, redirect GET /urls/new to GET /login
   if (!users[user_id]) {
@@ -161,7 +169,8 @@ app.get("/urls/:id", (req, res) => {
     return res.status(404).send("Not Found.");
   }
 
-  let user_id = req.cookies["user_id"];
+  // let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
 
   const templateVars = { 
     id: req.params.id, 
@@ -177,7 +186,8 @@ app.get("/urls/:id", (req, res) => {
 // GET /Register
 app.get('/register', (req, res) => {
   
-  let user_id = req.cookies["user_id"];
+  // let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (users[user_id]) {
@@ -190,7 +200,8 @@ app.get('/register', (req, res) => {
 // GET /LOGIN
 app.get('/login', (req, res) => {
 
-  let user_id = req.cookies["user_id"];
+  // let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (users[user_id]) {
@@ -211,7 +222,7 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls", (req, res) => {
 
-  let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (!users[user_id]) {
@@ -230,7 +241,8 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
 
-  let user_id = req.cookies["user_id"];
+  // let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (!users[user_id]) {
@@ -288,7 +300,8 @@ app.post('/register', (req, res) => {
   
   //The enetered credentials are correct
   //Set a cookie and then redirect the user
-  res.cookie('user_id', newUserId);
+  req.session.user_id = newUserId;
+  // res.cookie('user_id', newUserId);
   res.redirect('/urls');
 })
 
@@ -325,7 +338,9 @@ app.post('/login', (req, res) => {
 
   //The enetered credentials are correct
   //Set a cookie and then redirect the user
-  res.cookie('user_id', foundUser.id);
+  
+  req.session.user_id = foundUser.id;
+  // res.cookie('user_id', foundUser.id);
   res.redirect('/');
 })
 
@@ -351,7 +366,8 @@ app.post('/login', (req, res) => {
 //POST /logout
 app.post('/logout', (req, res) => {
   //Clear the cookie
-  res.clearCookie('user_id');
+  // res.clearCookie('user_id');
+  req.session.user_id = "";
 
   //redirect the user
   res.redirect('/login');
@@ -360,7 +376,8 @@ app.post('/logout', (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
 
-  let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
+  // let user_id = req.cookies["user_id"];
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (!users[user_id]) {
