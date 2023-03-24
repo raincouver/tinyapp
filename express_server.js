@@ -112,7 +112,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
 
-  if (!helper.ifShortUrlAccessible(req.params.id, urlDatabase, users)) {
+  if (!(req.session.userSessionID === urlDatabase[req.params.id].id)) {
     return res.status(401).send("Unauthorized.");
   }
 
@@ -200,7 +200,7 @@ app.post("/urls/:id", (req, res) => {
     return res.status(400).send('Log in is required to use this feature!');
   }
 
-  if (!helper.ifShortUrlAccessible(req.params.id, urlDatabase, users)) {
+  if (!(req.session.userSessionID === urlDatabase[req.params.id].id)) {
     return res.status(401).send("Unauthorized.");
   }
 
@@ -335,7 +335,7 @@ app.post("/urls/:id/delete", (req, res) => {
     return res.status(400).send('Log in is required to use this feature!');
   }
 
-  if (!helper.ifShortUrlAccessible(req.params.id, urlDatabase, users)) {
+  if (!(req.session.userSessionID === urlDatabase[req.params.id].id)) {
     return res.status(401).send("Unauthorized.");
   }
 

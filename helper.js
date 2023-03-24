@@ -13,10 +13,10 @@ const generateRandomString = function(length) {
   return result;
 };
 
-const getUserByEmail = function(email, database) {
+const getUserByEmail = function(emailPara, database) {
   for (const userId in database) {
     const user = database[userId];
-    if (user.email === email) {
+    if (user.email === emailPara) {
       // return true;
       return user;
     }
@@ -31,13 +31,6 @@ const getPageByShortUrl = function(shortUrl, database) {
   }
 };
 
-const ifShortUrlAccessible = function(shortUrl, urlData, userData) {
-  for (const userId in userData) {
-    if (userId === urlData[shortUrl].id) {
-      return true;
-    }
-  }
-};
 
 const urlsForUser = function(id, database) {
   const result = {};
@@ -55,6 +48,5 @@ module.exports = {
   generateRandomString,
   getUserByEmail,
   getPageByShortUrl,
-  ifShortUrlAccessible,
   urlsForUser
 };
