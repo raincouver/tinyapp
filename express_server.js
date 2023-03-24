@@ -80,7 +80,7 @@ app.get('/urls', (req, res) => {
   let userSessionID = req.session.userSessionID;
   //If the user is not logged in, display a message or prompt suggesting that they log in or register first.
   if (!users[userSessionID]) {
-    return res.status(400).send("<img src='https://http.cat/400'><h1>You must have an account to use our amazing feature! <br> Sign up now if you don't have an account with use yet. Log in if you do!</h1>");
+    return res.status(400).send("<img src='https://http.cat/400'><h1>You must have an account to use our amazing feature! <br> Sign up now if you don't have an account with us yet. Log in if you do!</h1>");
   }
 
   const templateVars = {
