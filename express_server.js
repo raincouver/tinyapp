@@ -80,7 +80,7 @@ app.get('/urls', (req, res) => {
   let userSessionID = req.session.userSessionID;
   //If the user is not logged in, display a message or prompt suggesting that they log in or register first.
   if (!users[userSessionID]) {
-    return res.status(400).send("You must have an account to use our amazing feature! Sign up now if you don't have an account with use yet. Log in if you do!");
+    return res.status(400).send("<img src='https://http.cat/400'><h1>You must have an account to use our amazing feature! <br> Sign up now if you don't have an account with use yet. Log in if you do!</h1>");
   }
 
   const templateVars = {
@@ -112,16 +112,15 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
 
-  if (!(req.session.userSessionID === urlDatabase[req.params.id].id)) {
-    return res.status(401).send("Unauthorized.");
-  }
+  let userSessionID = req.session.userSessionID;
 
   if (!helper.getPageByShortUrl(req.params.id, urlDatabase)) {
-    return res.status(404).send("Not Found.");
+    return res.status(404).send("<img src='https://http.cat/404'><h1>Not Found.</h1>");
   }
 
-  // let userSessionID = req.cookies["userSessionID"];
-  let userSessionID = req.session.userSessionID;
+  if (!(req.session.userSessionID === urlDatabase[req.params.id].id)) {
+    return res.status(401).send("<img src='https://http.cat/401'><h1>Unauthorized.</h1>");
+  }
 
   const templateVars = {
     id: req.params.id,
@@ -177,7 +176,7 @@ app.post("/urls", (req, res) => {
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (!users[userSessionID]) {
-    return res.status(400).send('Log in is required to use this feature!');
+    return res.status(400).send("<img src='https://http.cat/400'><h1>Log in is required to use this feature!</h1>");
   }
 
   let shortURL = helper.generateRandomString(6);
@@ -194,18 +193,18 @@ app.post("/urls/:id", (req, res) => {
 
   // let userSessionID = req.cookies["userSessionID"];
   let userSessionID = req.session.userSessionID;
-  
+
+    if (!helper.getPageByShortUrl(req.params.id, urlDatabase)) {
+    return res.status(404).send("<img src='https://http.cat/404'><h1>Not Found.</h1>");
+  }
+
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (!users[userSessionID]) {
-    return res.status(400).send('Log in is required to use this feature!');
+    return res.status(400).send("<img src='https://http.cat/400'><h1>Log in is required to use this feature!</h1>");
   }
 
   if (!(req.session.userSessionID === urlDatabase[req.params.id].id)) {
-    return res.status(401).send("Unauthorized.");
-  }
-
-  if (!helper.getPageByShortUrl(req.params.id, urlDatabase)) {
-    return res.status(404).send("Not Found.");
+    return res.status(401).send("<img src='https://http.cat/401'><h1>Unauthorized.</h1>");
   }
 
   urlDatabase[req.params.id].longURL = req.body.longURL;
@@ -220,15 +219,15 @@ app.post('/register', (req, res) => {
 
   //Check if email and password were not provided
   if (!email) {
-    return res.status(400).send('Please provide an email address to continue!');
+    return res.status(400).send("<img src='https://http.cat/400'><h1>Please provide an email address to continue!</h1>");
   }
-  if (!hashedPassword) {
-    return res.status(400).send('Please provide a password to continue!');
+  if (!req.body.password) {
+    return res.status(400).send("<img src='https://http.cat/400'><h1>Please provide a password to continue!</h1>");
   }
 
   //Check if email is already registered
   if (helper.getUserByEmail(email, users)) {
-    return res.status(400).send('Looks like you have already registered with us, log in with your password!');
+    return res.status(400).send("<img src='https://http.cat/400'><h1>Looks like you have already registered with us, log in with your password!</h1>");
   }
   
   //Assign new user with new id
@@ -264,7 +263,7 @@ app.post('/login', (req, res) => {
 
   //Check if email and password were not provided
   if (!email || !password) {
-    return res.status(400).send('Please provide email and password!');
+    return res.status(400).send("<img src='https://http.cat/400'><h1>Please provide email and password!</h1>");
   }
 
   //Look up the user based on their email address
@@ -279,12 +278,12 @@ app.post('/login', (req, res) => {
   console.log(foundUser);
   // did we Not find a user
   if (!foundUser) {
-    return res.status(400).send('No user with that email found!');
+    return res.status(400).send("<img src='https://http.cat/400'><h1>No user with that email found!</h1>");
   }
 
   // do the passwords NOT match
   if (!bcrypt.compareSync(password,foundUser.password)) {
-    return res.status(400).send('Passwords do not match!');
+    return res.status(400).send("<img src='https://http.cat/400'><h1>Passwords do not match!</h1>");
   }
 
   //The enetered credentials are correct
@@ -295,29 +294,10 @@ app.post('/login', (req, res) => {
   res.redirect('/');
 });
 
-// //GET /PROTECTED
-// app.get('/protected', (req, res) => {
-//   //check if the user is logged in
-//   const userId = req.cookies.userId;
-//   const user = users[userId];
-
-//   if (!userId) {
-//     return res.status(401).send('You must log in to see this page!');
-//   }
-
-//   const templateVars = {
-//     user: user,
-//   }
-
-//   console.log(user);
-//   //Happy Path is render the protected template
-//   res.render('protected', templateVars);
-// })
 
 //POST /logout
 app.post('/logout', (req, res) => {
-  //Clear the cookie
-  // res.clearCookie('userSessionID');
+
   req.session = null;
 
   //redirect the user
@@ -332,15 +312,15 @@ app.post("/urls/:id/delete", (req, res) => {
   
   //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs.
   if (!users[userSessionID]) {
-    return res.status(400).send('Log in is required to use this feature!');
+    return res.status(400).send("<img src='https://http.cat/400'><h1>Log in is required to use this feature!</h1>");
   }
 
   if (!(req.session.userSessionID === urlDatabase[req.params.id].id)) {
-    return res.status(401).send("Unauthorized.");
+    return res.status(401).send("<img src='https://http.cat/401'><h1>Unauthorized.</h1>");
   }
 
   if (!helper.getPageByShortUrl(req.params.id, urlDatabase)) {
-    return res.status(404).send("Not Found.");
+    return res.status(404).send("<img src='https://http.cat/404'><h1>Not Found.</h1>");
   }
 
   const id = req.params.id;
