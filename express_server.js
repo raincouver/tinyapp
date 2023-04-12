@@ -267,13 +267,13 @@ app.post('/login', (req, res) => {
   }
 
   //Look up the user based on their email address
-  let foundUser = null;
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      foundUser = user;
-    }
-  }
+  let foundUser = helper.getUserByEmail(email, users);
+  // for (const userId in users) {
+  //   const user = users[userId];
+  //   if (user.email === email) {
+  //     foundUser = user;
+  //   }
+  // }
 
   console.log(foundUser);
   // did we Not find a user
